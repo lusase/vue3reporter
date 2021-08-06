@@ -12,7 +12,7 @@ export class Reporter {
   reportUrl: string
   appId: string
   ajaxUrl: string
-  openAjaxMonitor = false
+  openAjaxMonitor = true
   openResourceMonitor = true
   openJsErrorMonitor = true
   openPromiseMonitor = true
