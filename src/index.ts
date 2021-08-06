@@ -1,3 +1,5 @@
+import install from './install'
 
-export {
+export default {
+  install
 }
