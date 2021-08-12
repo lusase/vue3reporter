@@ -94,6 +94,7 @@ export class Reporter {
     window.addEventListener('load', () => {
       setTimeout(() => {
         const params = {
+          /* 开始时间 */
           baseTime,
           /* 卸载上一个页面的时间 */
           unloadTime: timing.unloadEventEnd - timing.unloadEventStart,
