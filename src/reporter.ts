@@ -8,7 +8,12 @@ const formatParams = function(data) {
   return arr.join('&')
 }
 
+const humanReadableNumber = (n: number) => {
+
+}
+
 export class Reporter {
+  performanceUrl: string
   reportUrl: string
   appId: string
   ajaxUrl: string
@@ -31,6 +36,7 @@ export class Reporter {
 
   constructor(private app, options: Partial<Options>) {
     const {
+      performanceUrl,
       reportUrl,
       appId,
       openAjaxMonitor,
@@ -41,6 +47,7 @@ export class Reporter {
     } = options
 
     this.reportUrl = reportUrl
+    this.performanceUrl = performanceUrl
     this.appId = appId
     this.openAjaxMonitor = openAjaxMonitor ?? this.openAjaxMonitor
     this.openResourceMonitor = openResourceMonitor ?? this.openResourceMonitor
@@ -52,6 +59,7 @@ export class Reporter {
     this.openJsErrorMonitor && this.jsErrorMonitor()
     this.openPromiseMonitor && this.promiseMonitor()
     this.openVueMonitor && this.vueMonitor()
+    this.performanceUrl && this.reportPerformance()
   }
 
   processStackMsg(error) {
@@ -74,45 +82,59 @@ export class Reporter {
     const name = vm._isVue ? (vm.$options && vm.$options.name) || (vm.$options && vm.$options._componentTag) : vm.name
     return (name ? 'component <' + name + '>' : 'anonymous component') + (vm._isVue && vm.$options && vm.$options.__file ? ' at ' + (vm.$options && vm.$options.__file) : '')
   }
-  reportPerformance() {
+  async reportPerformance() {
     /* performance 对象 */
     // @ts-ignore
     const performance = window.webkitPerformance || window.msPerformance || window.performance
-    /* 所需信息 */
-    const points = [
-      'navigationStart', /* 开始浏览的时间 */
-      'unloadEventStart', 'unloadEventEnd', /* 卸载上一个页面的时间 */
-      'redirectStart', 'redirectEnd', /* HTTP重定向所消耗的时间 */
-      'fetchStart', 'domainLookupStart', /* 缓存加载的时间 */
-      'domainLookupStart', 'domainLookupEnd', /* DNS查询的时间 */
-      'connectStart', 'connectEnd', /* 建立TCP连接的时间 */
-      'connectStart', 'requestStart', 'responseStart', 'responseEnd', /* 建立TCP连接的时间 */
-      'domInteractive', /* 可以交互的时间 */
-      'domContentLoadedEventStart', 'domContentLoadedEventEnd', /* DomContentLoaded  页面加载完成的时间*/
-      'domLoading', 'domComplete', /* 页面渲染的时间 */
-      'domLoading', 'navigationStart', /* 加载页面花费的总时间 */
-      'loadEventStart', 'loadEventEnd', /* 加载事件的时间 */
-      'jsHeapSizeLimit', 'totalJSHeapSize', 'usedJSHeapSize', /* 内存的使用情况 */
-      'redirectCount', 'type' /* 页面重定向的次数和类型 */
-    ]
     /* 性能对象的属性 */
     const timing = performance.timing
     const memory = performance.memory
     const navigation = performance.navigation
-    /* 判断性能对象是否可用 */
-    if (performance && timing && memory && navigation) {
-      /* 组装统计的信息 */
-      const m = {
-        timing: timing,
-        memory: memory,
-        navigation: navigation,
-        userAgent: navigator.userAgent,
-        url: location.href,
-        data: + new Date  /* + 相当于 .valueOf()  */
-      }
-      /* 打印出上传的信息 */
-      console.log(m)
-    }
+    const baseTime = timing['navigationStart']
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const params = {
+          baseTime,
+          /* 卸载上一个页面的时间 */
+          unloadTime: timing.unloadEventEnd - timing.unloadEventStart,
+          /* HTTP重定向所消耗的时间 */
+          redirectTime: timing.redirectEnd - timing.redirectStart,
+          /* 缓存加载的时间 */
+          cacheLoadTime: timing.domainLookupStart - timing.fetchStart,
+          /* DNS查询的时间 */
+          dnsTime: timing.domainLookupEnd - timing.domainLookupStart,
+          /* 建立TCP连接的时间 */
+          tcpTime: timing.connectEnd - timing.connectStart,
+          /* 建立连接到发起请求 */
+          tcp1: timing.requestStart - timing.connectStart,
+          /* 发起请求到收到响应 */
+          tcp2: timing.responseStart - timing.requestStart,
+          /* 响应开始到响应结束 */
+          tcp3: timing.responseEnd - timing.responseStart,
+          /* 可以交互的时间 */
+          activeTime: timing.domInteractive - timing.navigationStart,
+          /* 页面加载完成的时间*/
+          domLoadedTime: timing.domContentLoadedEventEnd - timing.domContentLoadedEventStart,
+          /* 页面渲染的时间 */
+          renderTime: timing.domComplete - timing.domLoading,
+          /* 加载页面花费的总时间 */
+          pageLoadTime: timing.domLoading - timing.navigationStart,
+          /* 加载事件的时间 */
+          loadTime: timing.loadEventEnd - timing.loadEventStart,
+          /* 内存的使用情况 */
+          heapLimit: memory.jsHeapSizeLimit,
+          heapSize: memory.totalJSHeapSize,
+          heapUsed: memory.usedJSHeapSize,
+          /* 页面重定向的次数和类型 */
+          redirectCount: navigation.redirectCount,
+          redirectType: navigation.type,
+          userAgent: navigator.userAgent,
+          url: location.href,
+          appId: this.appId
+        }
+        this.imgReq(`${this.performanceUrl}?${formatParams(params)}`)
+      }, 1000)
+    })
   }
   // Ajax监控
   ajaxMonitor() {
@@ -141,7 +163,7 @@ export class Reporter {
               status: this.status
             })
             // 合并上报的数据，包括默认上报的数据和自定义上报的数据
-            const reportData = Object.assign({}, this.options)
+            const reportData = Object.assign({type: 'ajax'}, this.options)
             // 把错误信息发送给后台
             this.sendReport(reportData)
           }
@@ -166,7 +188,7 @@ export class Reporter {
       if (e.target != window) {
         //抛去js语法错误
         // 合并上报的数据，包括默认上报的数据和自定义上报的数据
-        const reportData = Object.assign({}, this.options)
+        const reportData = Object.assign({type: 'res'}, this.options)
         this.sendReport(reportData)
       }
     }, true)
@@ -197,7 +219,7 @@ export class Reporter {
           col: col
         })
         // 合并上报的数据，包括默认上报的数据和自定义上报的数据
-        const reportData = Object.assign({}, this.options)
+        const reportData = Object.assign({type: 'js'}, this.options)
         // 把错误信息发送给后台
         this.sendReport(reportData)
       }, 0)
@@ -215,7 +237,7 @@ export class Reporter {
         category: 'promise'
       })
       this.options.stack = 'promise is error'
-      const reportData = Object.assign({}, this.options)
+      const reportData = Object.assign({type: 'promise'}, this.options)
       this.sendReport(reportData)
       // 如果想要阻止继续抛出，即会在控制台显示 `Uncaught(in promise) Error` 的话，调用以下函数
       event.preventDefault()
@@ -235,7 +257,7 @@ export class Reporter {
       });
 
       // 合并上报的数据，包括默认上报的数据和自定义上报的数据
-      const reportData = Object.assign({}, this.options)
+      const reportData = Object.assign({type: 'vue'}, this.options)
       this.sendReport(reportData)
     }
   }
@@ -243,15 +265,18 @@ export class Reporter {
     this.sendReport = () => {}
   }
   sendReport(reportData) {
-    let img = new Image()
-    img.onload = img.onerror = function() {
-      img = null
-    }
     const reqData = Object.assign({}, this.options, reportData, {
       timestamp: new Date().getTime(),
       url: location.href,
       appId: this.appId
     })
-    img.src = `${this.reportUrl}?${formatParams(reqData)}`
+    this.imgReq(`${this.reportUrl}?${formatParams(reqData)}`)
+  }
+  imgReq(url) {
+    let img = new Image()
+    img.onload = img.onerror = function() {
+      img = null
+    }
+    img.src = url
   }
 }

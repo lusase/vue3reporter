@@ -5,8 +5,8 @@
   <meta name="viewport"
         content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Document</title>
-  <link rel="stylesheet" href="http://notexist/css.css">
+  <title>错误上报测试页面</title>
+<!--  <link rel="stylesheet" href="http://notexist/css.css">-->
 </head>
 <body>
   <div id="app"></div>
@@ -31,7 +31,8 @@
     })
     createApp(App)
       .use(Reporter, {
-        reportUrl: 'http://localhost',
+        reportUrl: 'http://localhost:3300/api/reports',
+        performanceUrl: 'http://localhost:3300/api/performance',
         appId: 'myAppid'
       })
       .mount('#app')

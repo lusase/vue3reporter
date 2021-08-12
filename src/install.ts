@@ -1,6 +1,7 @@
 import {Reporter} from './reporter'
 
 export type Options = {
+  performanceUrl: string
   reportUrl: string
   appId: string
   openAjaxMonitor: boolean
