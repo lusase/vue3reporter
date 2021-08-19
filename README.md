@@ -24,6 +24,20 @@ createApp(App)
 .mount('#app')
 ```
 
+### 在 vue2 中如何使用
+- 示例
+```
+import Vue from 'vue'
+import reporter from 'vue3reporter'
+import App from './App.vue'
+
+Vue.use(reporter, {appId: 'your app id', reportUrl: 'xxx'})
+
+new Vue({
+  template: '<App/>'
+}).$mount('#app')
+```
+
 ### API
 
 - 调用时参数
