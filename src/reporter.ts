@@ -13,6 +13,7 @@ const humanReadableNumber = (n: number) => {
 }
 
 export class Reporter {
+  isVue2 = false
   performanceUrl: string
   reportUrl: string
   appId: string
@@ -45,6 +46,10 @@ export class Reporter {
       openPromiseMonitor,
       openVueMonitor
     } = options
+
+    if (typeof app === 'function') {
+      this.isVue2 = true
+    }
 
     this.reportUrl = reportUrl
     this.performanceUrl = performanceUrl

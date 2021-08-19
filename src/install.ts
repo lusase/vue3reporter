@@ -20,9 +20,17 @@ export default function install(app, options: Partial<Options>) {
 
   const reporter = new Reporter(app, options)
 
-  Object.defineProperty(app.config.globalProperties, '$reporter',{
-    get() {
-      return reporter
-    }
-  })
+  if (typeof app === 'function') {
+    Object.defineProperty(app.prototype, '$reporter', {
+      get() {
+        return reporter
+      }
+    })
+  } else {
+    Object.defineProperty(app.config.globalProperties, '$reporter',{
+      get() {
+        return reporter
+      }
+    })
+  }
 }
