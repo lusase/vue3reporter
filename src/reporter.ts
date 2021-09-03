@@ -144,6 +144,7 @@ export class Reporter {
   }
   // Ajax监控
   ajaxMonitor() {
+    const self = this
     const sAjaxListener: Record<string, any> = {}
     sAjaxListener.tempSend = XMLHttpRequest.prototype.send //复制原先的send方法
     sAjaxListener.tempOpen = XMLHttpRequest.prototype.open //复制原先的open方法
@@ -160,18 +161,18 @@ export class Reporter {
           if (this.status >= 200 && this.status < 300) {
             oldReq && oldReq.apply(this, [_data])
           } else {
-            this.options.msg = 'ajax请求错误'
-            this.options.stack = `错误码：${this.status}`
-            this.options.data = JSON.stringify({
+            self.options.msg = 'ajax请求错误'
+            self.options.stack = `错误码：${this.status}`
+            self.options.data = JSON.stringify({
               fileName: this.ajaxUrl,
               category: 'ajax',
               text: this.statusText,
               status: this.status
             })
             // 合并上报的数据，包括默认上报的数据和自定义上报的数据
-            const reportData = Object.assign({type: 'ajax'}, this.options)
+            const reportData = Object.assign({type: 'ajax'}, self.options)
             // 把错误信息发送给后台
-            this.sendReport(reportData)
+            self.sendReport(reportData)
           }
         }
       }

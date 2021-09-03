@@ -1,6 +1,6 @@
 {
   "name": "vue3reporter",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "description": "vue3 bug reporter",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
