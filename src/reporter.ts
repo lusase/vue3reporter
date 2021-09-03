@@ -158,9 +158,7 @@ export class Reporter {
       const oldReq = this.onreadystatechange
       this.onreadystatechange = function() {
         if (this.readyState == 4) {
-          if (this.status >= 200 && this.status < 300) {
-            oldReq && oldReq.apply(this, [_data])
-          } else {
+          if (this.status >= 400)  {
             self.options.msg = 'ajax请求错误'
             self.options.stack = `错误码：${this.status}`
             self.options.data = JSON.stringify({
@@ -174,6 +172,7 @@ export class Reporter {
             // 把错误信息发送给后台
             self.sendReport(reportData)
           }
+          oldReq && oldReq.apply(this, [_data])
         }
       }
       sAjaxListener.tempSend.apply(this, [_data])
