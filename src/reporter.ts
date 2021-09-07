@@ -246,12 +246,13 @@ export class Reporter {
       const reportData = Object.assign({type: 'promise'}, this.options)
       this.sendReport(reportData)
       // 如果想要阻止继续抛出，即会在控制台显示 `Uncaught(in promise) Error` 的话，调用以下函数
-      event.preventDefault()
+      // event.preventDefault()
     },true)
   }
   //Vue异常监控
   vueMonitor() {
     this.app.config.errorHandler = (error, vm, info) => {
+      console.error(error)
       const componentName = this.formatComponentName(vm)
 
       this.options.msg = error.message
