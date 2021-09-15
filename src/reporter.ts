@@ -68,6 +68,7 @@ export class Reporter {
   }
 
   processStackMsg(error) {
+    if (!error || !error.stack) return ''
     let stack = error.stack
       .replace(/\n/gi, '') // 去掉换行，节省传输内容大小
       .replace(/\bat\b/gi, '@') // chrome中是at，ff中是@
